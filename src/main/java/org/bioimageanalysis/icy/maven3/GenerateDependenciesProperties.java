@@ -45,7 +45,8 @@ public class GenerateDependenciesProperties extends AbstractMojo {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     MavenProject project;
 
-    @Parameter(defaultValue = "${project.build.outputDirectory}/META-INF/${project.groupId}.${project.artifactId}/dependencies.yaml", required = true, readonly = true)
+    //@Parameter(defaultValue = "${project.build.outputDirectory}/META-INF/${project.groupId}.${project.artifactId}/dependencies.yaml", required = true, readonly = true)
+    @Parameter(defaultValue = "${project.build.outputDirectory}/META-INF/dependencies.yaml", required = true, readonly = true)
     File outputFile;
 
     @Parameter
