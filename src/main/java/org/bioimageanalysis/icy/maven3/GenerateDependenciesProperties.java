@@ -18,6 +18,7 @@
 
 package org.bioimageanalysis.icy.maven3;
 
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -25,8 +26,10 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -39,13 +42,14 @@ import java.util.*;
  *
  * @author Thomas Musset
  * @version 1.0.0-a.5
+ * @deprecated Not useful anymore because Icy implement maven resolver to search automatically for dependencies
  */
-@Mojo(name = "generate-dependencies-properties", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
+@Deprecated(forRemoval = true)
+@Mojo(name = "generate-dependencies-properties", defaultPhase = LifecyclePhase.GENERATE_SOURCES, threadSafe = true, requiresDependencyResolution = ResolutionScope.TEST)
 public class GenerateDependenciesProperties extends AbstractMojo {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     MavenProject project;
 
-    //@Parameter(defaultValue = "${project.build.outputDirectory}/META-INF/${project.groupId}.${project.artifactId}/dependencies.yaml", required = true, readonly = true)
     @Parameter(defaultValue = "${project.build.outputDirectory}/META-INF/dependencies.yaml", required = true, readonly = true)
     File outputFile;
 
@@ -60,19 +64,43 @@ public class GenerateDependenciesProperties extends AbstractMojo {
         if (!outputFile.getParentFile().exists() && !outputFile.getParentFile().mkdirs())
             throw new MojoFailureException("Cannot create output directory");
 
-        final List<Map<String, Object>> dependencies = getDependencies();
+        final Map<String, List<Map<String, Object>>> pds = getDependencies();
         final Yaml yaml = new Yaml();
         try (final FileWriter writer = new FileWriter(outputFile)) {
-            yaml.dump(dependencies, writer);
+            yaml.dump(pds, writer);
         }
         catch (final IOException e) {
             throw new MojoExecutionException(e);
         }
     }
 
-    private @NotNull List<Map<String, Object>> getDependencies() {
+    private @NotNull @Unmodifiable Map<String, List<Map<String, Object>>> getDependencies() {
         final List<Dependency> dependencies = project.getDependencies();
-        final List<Map<String, Object>> result = new ArrayList<>();
+        final Set<Artifact> artifacts = project.getArtifacts();
+
+        final List<Map<String, Object>> artifactsResolved = new ArrayList<>();
+        for (final Artifact artifact : artifacts) {
+            if (!artifact.getScope().equals("compile"))
+                continue;
+            if (artifact.getGroupId().startsWith("org.bioimageanalysis"))
+                continue;
+            final Map<String, Object> data = new HashMap<>(4);
+            data.put("groupId", artifact.getGroupId());
+            data.put("artifactId", artifact.getArtifactId());
+            data.put("version", artifact.getVersion());
+
+            if (artifact.getRepository() != null) {
+                final Map<String, String> repoData = new HashMap<>();
+                repoData.put("id", artifact.getRepository().getId());
+                repoData.put("url", artifact.getRepository().getUrl());
+                repoData.put("protocol", artifact.getRepository().getProtocol());
+                data.put("repository", repoData);
+            }
+
+            artifactsResolved.add(data);
+        }
+
+        final List<Map<String, Object>> dependenciesResolved = new ArrayList<>();
         for (final Dependency dependency : dependencies) {
             if (resolveArtifactId(dependency) && resolveGroupId(dependency) && resolveScope(dependency)) {
                 final Map<String, Object> data = new HashMap<>();
@@ -80,27 +108,30 @@ public class GenerateDependenciesProperties extends AbstractMojo {
                 data.put("artifactId", dependency.getArtifactId());
                 data.put("version", dependency.getVersion());
 
-                result.add(data);
+                dependenciesResolved.add(data);
             }
         }
-        return result;
+
+        return Map.of("external", artifactsResolved, "icy", dependenciesResolved);
     }
 
-    private boolean resolveGroupId(final Dependency dependency) {
+    private boolean resolveGroupId(final @NotNull Dependency dependency) {
         if (excludeGroupIds == null || excludeGroupIds.length == 0)
             return true;
 
         return !Arrays.asList(excludeGroupIds).contains(dependency.getGroupId());
     }
 
-    private boolean resolveArtifactId(final Dependency dependency) {
+    private boolean resolveArtifactId(final @NotNull Dependency dependency) {
         if (excludeArtifactIds == null || excludeArtifactIds.length == 0)
             return true;
 
         return !Arrays.asList(excludeArtifactIds).contains(dependency.getArtifactId());
     }
 
-    private boolean resolveScope(final Dependency dependency) {
+    private boolean resolveScope(final @NotNull Dependency dependency) {
+        //return dependency.getScope().equals("provided") || dependency.getScope().equals("compile");
         return dependency.getScope().equals("provided");
+        //return !dependency.getScope().equals("test") && dependency.getScope().equals("provided");
     }
 }

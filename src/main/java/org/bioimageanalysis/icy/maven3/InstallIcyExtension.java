@@ -23,16 +23,18 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 
-@Mojo(name = "install-icy-extension", defaultPhase = LifecyclePhase.INSTALL)
+@Mojo(name = "install-icy-extension", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST)
 public class InstallIcyExtension extends AbstractMojo {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     MavenProject project;
@@ -53,44 +55,28 @@ public class InstallIcyExtension extends AbstractMojo {
         if (!installIcyExtension)
             return;
 
-        final File jarFile = new File(project.getBuild().getDirectory(), project.getArtifactId() + "-" + project.getVersion() + ".jar");
-        if (!jarFile.exists())
-            throw new MojoExecutionException("Could not find jar file: " + jarFile.getAbsolutePath());
-
+        // Finding Icy home directory
         final File icyHomeDirectory = new File(System.getProperty("user.home"), ".icy");
         if (!icyHomeDirectory.exists())
             icyHomeDirectory.mkdirs();
 
+        // Finding extensions directory
         final File extensionsDirectory = new File(icyHomeDirectory, "extensions");
         if (!extensionsDirectory.exists())
             extensionsDirectory.mkdirs();
 
-        final String fullPath = project.getGroupId() + "." + project.getArtifactId();
-        final String[] fullPathSplit = fullPath.split("\\.");
-
-        File parent = extensionsDirectory;
-        for (final String s : fullPathSplit) {
-            final File f = new File(parent, s);
-            if (!f.exists())
-                f.mkdirs();
-            parent = f;
-        }
-
-        final File copyJarFile = new File(parent, project.getArtifactId() + ".jar");
-
-        try {
-            Files.copy(jarFile.toPath(), copyJarFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        }
-        catch (final Throwable t) {
-            throw new MojoExecutionException("Could not copy jar file: " + jarFile.getAbsolutePath(), t);
-        }
-
-        final String copyJarPath = fullPath.replace(".", File.separator) + File.separator + project.getArtifactId() + ".jar";
-
+        // Writing extensions binary file
         final File extensionsBinaryFile = new File(extensionsDirectory, "ext.bin");
         if (!extensionsBinaryFile.exists()) {
             final List<Map<String, Object>> list = new ArrayList<>();
-            list.add(Map.of("path", copyJarPath));
+            list.add(
+                    Map.of(
+                            "groupId", project.getGroupId(),
+                            "artifactId", project.getArtifactId(),
+                            "version", project.getVersion(),
+                            "distribution", project.getDistributionManagement().getRepository().getUrl()
+                    )
+            );
             dumpData(list, extensionsBinaryFile);
         }
         else {
@@ -103,19 +89,23 @@ public class InstallIcyExtension extends AbstractMojo {
 
                 final Yaml yaml = new Yaml();
                 final List<Map<String, Object>> list = yaml.load(sb.toString());
-                boolean found = false;
                 for (final Map<String, Object> map : list) {
-                    if (map.get("path").equals(copyJarPath)) {
-                        found = true;
+                    if (map.get("groupId").equals(project.getGroupId()) && map.get("artifactId").equals(project.getArtifactId())) {
+                        list.remove(map);
                         break;
                     }
                 }
 
-                if (!found) {
-                    list.add(Map.of("path", copyJarPath));
+                list.add(
+                        Map.of(
+                                "groupId", project.getGroupId(),
+                                "artifactId", project.getArtifactId(),
+                                "version", project.getVersion(),
+                                "distribution", project.getDistributionManagement().getRepository().getUrl()
+                        )
+                );
 
-                    dumpData(list, extensionsBinaryFile);
-                }
+                dumpData(list, extensionsBinaryFile);
             }
             catch (final Throwable t) {
                 throw new MojoExecutionException("Failed to read extensions binary file", t);
@@ -123,6 +113,9 @@ public class InstallIcyExtension extends AbstractMojo {
         }
     }
 
+    /**
+     * Write data to extensions binary file
+     */
     private void dumpData(final List<Map<String, Object>> list, final File extensionsBinaryFile) throws MojoExecutionException {
         final Yaml yaml = new Yaml();
         final String dump = yaml.dump(list);
