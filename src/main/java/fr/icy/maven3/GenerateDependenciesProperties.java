@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025. Institut Pasteur.
+ * Copyright (c) 2010-2026. Institut Pasteur.
  *
  * This file is part of Icy.
  * Icy is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  * along with Icy. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.bioimageanalysis.icy.maven3;
+package fr.icy.maven3;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Dependency;
