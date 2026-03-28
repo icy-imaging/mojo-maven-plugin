@@ -7,12 +7,12 @@
     <parent>
         <groupId>fr.icy</groupId>
         <artifactId>pom-icy</artifactId>
-        <version>3.0.0-a.6</version>
+        <version>3.0.0-a.7</version>
     </parent>
 
-    <groupId>fr.icy.maven3</groupId>
-    <artifactId>extension-properties-plugin</artifactId>
-    <version>1.0.0-a.6</version>
+    <groupId>fr.icy.maven</groupId>
+    <artifactId>mojo-maven-plugin</artifactId>
+    <version>1.0.0-a.7-SNAPSHOT</version>
 
     <packaging>maven-plugin</packaging>
 
@@ -22,17 +22,17 @@
     <inceptionYear>2025</inceptionYear>
 
     <scm>
-        <url>https://gitlab.pasteur.fr/bia/icy/maven/maven-extension-properties</url>
+        <url>https://gitlab.pasteur.fr/bia/icy/maven/icy-maven-plugin</url>
         <tag>v${project.version}</tag>
     </scm>
 
     <issueManagement>
         <system>GitLab Issues</system>
-        <url>https://gitlab.pasteur.fr/bia/icy/maven/maven-extension-properties/-/issues</url>
+        <url>https://gitlab.pasteur.fr/bia/icy/maven/icy-maven-plugin/-/issues</url>
     </issueManagement>
     <ciManagement>
         <system>GitLab CI</system>
-        <url>https://gitlab.pasteur.fr/bia/icy/maven/maven-extension-properties/-/pipelines</url>
+        <url>https://gitlab.pasteur.fr/bia/icy/maven/icy-maven-plugin/-/pipelines</url>
     </ciManagement>
 
     <organization>
@@ -80,32 +80,37 @@
     <properties>
         <license.licenseName>GNU LGPLv3</license.licenseName>
         <license.copyrightOwners>Institut Pasteur</license.copyrightOwners>
+
+
+        <maven.version>3.9.14</maven.version>
+        <maven-annotations.version>3.15.2</maven-annotations.version>
+        <maven-enforcer.version>3.6.2</maven-enforcer.version>
+        <javax.inject.version>1</javax.inject.version>
+        <sisu-maven-plugin.version>1.0.0</sisu-maven-plugin.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
-            <version>3.9.10</version>
+            <version>${maven.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-core</artifactId>
-            <version>3.9.10</version>
+            <version>${maven.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.maven.plugin-tools</groupId>
             <artifactId>maven-plugin-annotations</artifactId>
-            <version>3.15.1</version>
-            <scope>provided</scope>
+            <version>${maven-annotations.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
 
@@ -115,12 +120,24 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
                 <version>3.15.1</version>
+                <configuration>
+                    <!-- Prefix used to invoke your plugin: mvn icy-mojo:something -->
+                    <goalPrefix>icy-mojo</goalPrefix>
+                    <skipErrorNoDescriptorsFound>false</skipErrorNoDescriptorsFound>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>default-descriptor</id>
-                        <configuration>
-                            <goalPrefix>extension-properties</goalPrefix>
-                        </configuration>
+                        <id>generate-descriptor</id>
+                        <goals>
+                            <goal>descriptor</goal>
+                        </goals>
+                    </execution>
+                    <!-- Generates help goal (mvn icy-mojo:help) -->
+                    <execution>
+                        <id>generate-helpmojo</id>
+                        <goals>
+                            <goal>helpmojo</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>

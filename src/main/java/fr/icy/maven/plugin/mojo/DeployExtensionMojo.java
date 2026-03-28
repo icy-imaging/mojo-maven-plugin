@@ -16,7 +16,7 @@
  * along with Icy. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package fr.icy.maven3;
+package fr.icy.maven.plugin.mojo;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -24,8 +24,8 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 
-@Mojo(name = "deploy-icy-extension", defaultPhase = LifecyclePhase.DEPLOY)
-public class DeployIcyExtension extends AbstractMojo {
+@Mojo(name = "deploy-extension", defaultPhase = LifecyclePhase.DEPLOY)
+public class DeployExtensionMojo extends AbstractMojo {
     /**
      * Perform whatever build-process behavior this <code>Mojo</code> implements.<br>
      * This is the main trigger for the <code>Mojo</code> inside the <code>Maven</code> system, and allows

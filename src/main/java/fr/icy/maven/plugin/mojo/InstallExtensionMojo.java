@@ -16,7 +16,7 @@
  * along with Icy. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package fr.icy.maven3;
+package fr.icy.maven.plugin.mojo;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -34,8 +34,8 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
-@Mojo(name = "install-icy-extension", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST)
-public class InstallIcyExtension extends AbstractMojo {
+@Mojo(name = "install-extension", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST)
+public class InstallExtensionMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     MavenProject project;
 

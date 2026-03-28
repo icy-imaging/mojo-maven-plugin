@@ -16,7 +16,7 @@
  * along with Icy. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package fr.icy.maven3;
+package fr.icy.maven.plugin.mojo;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -31,8 +31,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 
-@Mojo(name = "include-natives", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
-public class IncludeExtensionNatives extends AbstractMojo {
+@Mojo(name = "include-extension-natives", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
+public class IncludeExtensionNativesMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     MavenProject project;
 

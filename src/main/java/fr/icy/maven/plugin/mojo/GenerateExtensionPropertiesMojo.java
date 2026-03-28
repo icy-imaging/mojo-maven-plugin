@@ -16,7 +16,7 @@
  * along with Icy. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package fr.icy.maven3;
+package fr.icy.maven.plugin.mojo;
 
 import org.apache.maven.model.Contributor;
 import org.apache.maven.model.Developer;
@@ -40,7 +40,7 @@ import java.util.Map;
  * @version 1.0.0-a.5
  */
 @Mojo(name = "generate-extension-properties", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
-public class GenerateExtensionProperties extends AbstractMojo {
+public class GenerateExtensionPropertiesMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     MavenProject project;
 
