@@ -22,17 +22,17 @@
     <inceptionYear>2025</inceptionYear>
 
     <scm>
-        <url>https://gitlab.pasteur.fr/bia/icy/maven/icy-maven-plugin</url>
+        <url>https://gitlab.pasteur.fr/bia/icy/maven/mojo-maven-plugin</url>
         <tag>v${project.version}</tag>
     </scm>
 
     <issueManagement>
         <system>GitLab Issues</system>
-        <url>https://gitlab.pasteur.fr/bia/icy/maven/icy-maven-plugin/-/issues</url>
+        <url>https://gitlab.pasteur.fr/bia/icy/maven/mojo-maven-plugin/-/issues</url>
     </issueManagement>
     <ciManagement>
         <system>GitLab CI</system>
-        <url>https://gitlab.pasteur.fr/bia/icy/maven/icy-maven-plugin/-/pipelines</url>
+        <url>https://gitlab.pasteur.fr/bia/icy/maven/mojo-maven-plugin/-/pipelines</url>
     </ciManagement>
 
     <organization>
@@ -81,47 +81,49 @@
         <license.licenseName>GNU LGPLv3</license.licenseName>
         <license.copyrightOwners>Institut Pasteur</license.copyrightOwners>
 
+        <maven-core.version>3.9.15</maven-core.version>
+        <org.apache.maven.maven-core.version>${maven-core.version}</org.apache.maven.maven-core.version>
 
-        <maven.version>3.9.14</maven.version>
-        <maven-annotations.version>3.15.2</maven-annotations.version>
-        <maven-enforcer.version>3.6.2</maven-enforcer.version>
-        <javax.inject.version>1</javax.inject.version>
-        <sisu-maven-plugin.version>1.0.0</sisu-maven-plugin.version>
+        <maven-plugin-api.version>${maven-core.version}</maven-plugin-api.version>
+        <org.apache.maven.maven-plugin-api.version>${maven-plugin-api.version}</org.apache.maven.maven-plugin-api.version>
+
+        <maven-plugin-annotations.version>3.15.2</maven-plugin-annotations.version>
+        <org.apache.maven.plugin-tools.maven-plugin-annotations.version>${maven-plugin-annotations.version}</org.apache.maven.plugin-tools.maven-plugin-annotations.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.apache.maven</groupId>
-            <artifactId>maven-plugin-api</artifactId>
-            <version>${maven.version}</version>
+            <artifactId>maven-core</artifactId>
+            <version>${org.apache.maven.maven-core.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.maven</groupId>
-            <artifactId>maven-core</artifactId>
-            <version>${maven.version}</version>
+            <artifactId>maven-plugin-api</artifactId>
+            <version>${org.apache.maven.maven-plugin-api.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.maven.plugin-tools</groupId>
             <artifactId>maven-plugin-annotations</artifactId>
-            <version>${maven-annotations.version}</version>
+            <version>${org.apache.maven.plugin-tools.maven-plugin-annotations.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
+            <version>${org.yaml.snakeyaml.version}</version>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
-                <version>3.15.1</version>
+                <version>${maven-plugin-plugin.version}</version>
                 <configuration>
-                    <!-- Prefix used to invoke your plugin: mvn icy-mojo:something -->
+                    <!-- Prefix used to invoke this maven plugin: mvn icy-mojo:something -->
                     <goalPrefix>icy-mojo</goalPrefix>
                     <skipErrorNoDescriptorsFound>false</skipErrorNoDescriptorsFound>
                 </configuration>

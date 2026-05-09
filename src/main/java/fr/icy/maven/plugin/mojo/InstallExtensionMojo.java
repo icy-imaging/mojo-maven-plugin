@@ -29,10 +29,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Mojo(name = "install-extension", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST)
 public class InstallExtensionMojo extends AbstractMojo {
@@ -58,15 +55,22 @@ public class InstallExtensionMojo extends AbstractMojo {
         // Finding Icy home directory
         final File icyHomeDirectory = new File(System.getProperty("user.home"), ".icy");
         if (!icyHomeDirectory.exists())
-            icyHomeDirectory.mkdirs();
+            if (icyHomeDirectory.mkdirs())
+                getLog().info("Created icy home directory");
 
         // Finding extensions directory
         final File extensionsDirectory = new File(icyHomeDirectory, "extensions");
         if (!extensionsDirectory.exists())
-            extensionsDirectory.mkdirs();
+            if (extensionsDirectory.mkdirs())
+                getLog().info("Created icy extensions folder");
+
+        String distribution = "";
+        if (project.getDistributionManagement() != null)
+            if (project.getDistributionManagement().getRepository() != null)
+                distribution = Objects.requireNonNullElse(project.getDistributionManagement().getRepository().getUrl(), "");
 
         // Writing extensions binary file
-        final File extensionsBinaryFile = new File(extensionsDirectory, "ext.bin");
+        final File extensionsBinaryFile = new File(extensionsDirectory, "extensions.yml");
         if (!extensionsBinaryFile.exists()) {
             final List<Map<String, Object>> list = new ArrayList<>();
             list.add(
@@ -74,23 +78,27 @@ public class InstallExtensionMojo extends AbstractMojo {
                             "groupId", project.getGroupId(),
                             "artifactId", project.getArtifactId(),
                             "version", project.getVersion(),
-                            "distribution", project.getDistributionManagement().getRepository().getUrl()
+                            "distribution", distribution
                     )
             );
             dumpData(list, extensionsBinaryFile);
         }
         else {
-            try (final InputStream is = new FileInputStream(extensionsBinaryFile)) {
-                final byte[] readRawData = is.readAllBytes();
-                final byte[] readData = Base64.getDecoder().decode(readRawData);
-                final StringBuilder sb = new StringBuilder();
-                for (final byte readDatum : readData)
-                    sb.append((char) readDatum);
+            try (final FileInputStream is = new FileInputStream(extensionsBinaryFile)) {
+                //final byte[] readRawData = is.readAllBytes();
+                //final byte[] readData = Base64.getDecoder().decode(readRawData);
+                //final StringBuilder sb = new StringBuilder();
+                //for (final byte readDatum : readData)
+                    //sb.append((char) readDatum);
 
                 final Yaml yaml = new Yaml();
-                final List<Map<String, Object>> list = yaml.load(sb.toString());
+                //final List<Map<String, Object>> list = yaml.load(sb.toString());
+                final Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
+                final List<Map<String, Object>> list = yaml.load(reader);
+                reader.close();
                 for (final Map<String, Object> map : list) {
                     if (map.get("groupId").equals(project.getGroupId()) && map.get("artifactId").equals(project.getArtifactId())) {
+                        getLog().info("Artefact already registered in Icy, replaced it");
                         list.remove(map);
                         break;
                     }
@@ -101,14 +109,14 @@ public class InstallExtensionMojo extends AbstractMojo {
                                 "groupId", project.getGroupId(),
                                 "artifactId", project.getArtifactId(),
                                 "version", project.getVersion(),
-                                "distribution", project.getDistributionManagement().getRepository().getUrl()
+                                "distribution", distribution
                         )
                 );
 
                 dumpData(list, extensionsBinaryFile);
             }
             catch (final Throwable t) {
-                throw new MojoExecutionException("Failed to read extensions binary file", t);
+                throw new MojoExecutionException("Failed to read extensions file", t);
             }
         }
     }
@@ -116,16 +124,21 @@ public class InstallExtensionMojo extends AbstractMojo {
     /**
      * Write data to extensions binary file
      */
-    private void dumpData(final List<Map<String, Object>> list, final File extensionsBinaryFile) throws MojoExecutionException {
+    private void dumpData(final List<Map<String, Object>> list, final File extensionsFile) throws MojoExecutionException {
         final Yaml yaml = new Yaml();
-        final String dump = yaml.dump(list);
-        final byte[] data = Base64.getEncoder().encode(dump.getBytes(StandardCharsets.ISO_8859_1));
+        //final String dump = yaml.dump(list);
+        //final byte[] data = Base64.getEncoder().encode(dump.getBytes(StandardCharsets.ISO_8859_1));
 
-        try (final OutputStream os = new FileOutputStream(extensionsBinaryFile)) {
-            os.write(data);
+        try (final FileOutputStream os = new FileOutputStream(extensionsFile)) {
+            //os.write(data);
+            final Writer writer = new OutputStreamWriter(os, StandardCharsets.UTF_8);
+            yaml.dump(list, writer);
+            writer.flush();
+            writer.close();
+            getLog().info("Extension file written successfully");
         }
         catch (final Throwable t) {
-            throw new MojoExecutionException("Failed to create extensions binary file", t);
+            throw new MojoExecutionException("Failed to create extensions file", t);
         }
     }
 }

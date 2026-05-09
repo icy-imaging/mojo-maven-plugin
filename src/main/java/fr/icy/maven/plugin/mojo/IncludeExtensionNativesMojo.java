@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 
+@Deprecated(forRemoval = true)
 @Mojo(name = "include-extension-natives", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
 public class IncludeExtensionNativesMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)

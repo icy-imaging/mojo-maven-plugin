@@ -39,5 +39,6 @@ public class DeployExtensionMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         // TODO
+        getLog().info("Registering extension to Icy website (not implemented yet)");
     }
 }

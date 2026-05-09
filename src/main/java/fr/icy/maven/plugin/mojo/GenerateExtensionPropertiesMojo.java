@@ -30,10 +30,7 @@ import org.apache.maven.project.MavenProject;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Thomas Musset
@@ -65,7 +62,7 @@ public class GenerateExtensionPropertiesMojo extends AbstractMojo {
             data.put("url", project.getUrl());
             data.put("scm", project.getScm().getUrl());
 
-            data.put("kernelVersion", project.getProperties().getProperty("icy.kernel.version"));
+            data.put("kernelVersion", project.getProperties().getProperty("icy.version"));
 
             final List<Map<String, Object>> developersData = new ArrayList<>();
             for (final Developer developer : project.getDevelopers()) {
@@ -97,14 +94,17 @@ public class GenerateExtensionPropertiesMojo extends AbstractMojo {
             }
             data.put("contributors", contributorsData);
 
-            data.put("downloadUrl", project.getDistributionManagement().getDownloadUrl());
-            data.put("repository", project.getDistributionManagement().getRepository().getName());
-            data.put("repositoryUrl", project.getDistributionManagement().getRepository().getUrl());
+            if (project.getDistributionManagement() != null) {
+                data.put("downloadUrl", Objects.requireNonNullElse(project.getDistributionManagement().getDownloadUrl(), ""));
+                data.put("repository", Objects.requireNonNullElse(project.getDistributionManagement().getRepository().getName(), ""));
+                data.put("repositoryUrl", Objects.requireNonNullElse(project.getDistributionManagement().getRepository().getUrl(), ""));
+            }
 
             yaml.dump(data, fw);
+            getLog().info("Generated extension properties successfully");
         }
-        catch (final IOException e) {
-            throw new MojoExecutionException(e);
+        catch (final Throwable t) {
+            throw new MojoExecutionException("Unable to generate extension properties", t);
         }
     }
 }
