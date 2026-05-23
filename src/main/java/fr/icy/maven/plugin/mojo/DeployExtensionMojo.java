@@ -24,8 +24,22 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 
+/**
+ * Maven Mojo for deploying an extension to the Icy platform.
+ * <p>
+ * This Mojo is triggered during the deploy phase of the Maven build lifecycle.
+ * It is responsible for registering and deploying extensions to the Icy website.
+ * The current implementation is a placeholder and requires further development.
+ */
 @Mojo(name = "deploy-extension", defaultPhase = LifecyclePhase.DEPLOY)
 public class DeployExtensionMojo extends AbstractMojo {
+    /**
+     * Default constructor.
+     */
+    public DeployExtensionMojo() {
+        super();
+    }
+
     /**
      * Perform whatever build-process behavior this <code>Mojo</code> implements.<br>
      * This is the main trigger for the <code>Mojo</code> inside the <code>Maven</code> system, and allows

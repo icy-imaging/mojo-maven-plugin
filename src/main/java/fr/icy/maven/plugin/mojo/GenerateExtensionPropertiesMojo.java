@@ -33,8 +33,39 @@ import java.io.*;
 import java.util.*;
 
 /**
- * @author Thomas Musset
- * @version 1.0.0-a.5
+ * Mojo responsible for generating extension metadata as a YAML file
+ * containing project-related information. The metadata is used for
+ * describing the Maven project and its contributors in a structured format.
+ * <p>
+ * This Mojo is bound to the `generate-resources` phase of the Maven
+ * lifecycle and generates the file at the specified output path.
+ * <p>
+ * Goals Supported:
+ * <ul>
+ * <li>generate-extension-properties: Generates `extension.yaml` with project
+ * details, such as artifact information, SCM details, developers, and
+ * contributors.</li>
+ * </ul>
+ * <p>
+ * Configuration:
+ * <ul>
+ * <li>The `project` parameter is automatically injected with the Maven
+ * project during execution.</li>
+ * <li>The `outputFile` parameter specifies the file path where the generated
+ * YAML should be stored. By default, it is
+ * `${project.build.outputDirectory}/META-INF/extension.yaml`.</li>
+ * </ul>
+ * <p>
+ * Functionality:
+ * <ul>
+ * <li>Extracts metadata from the Maven project, including artifactId,
+ * groupId, version, name, description, organization details, SCM
+ * information, kernel version (icy.version), and lists of developers
+ * and contributors.</li>
+ * <li>Metadata is serialized into a YAML file using the SnakeYAML library.</li>
+ * <li>Automatically manages the creation of the output directory if it
+ * does not exist.</li>
+ * </ul>
  */
 @Mojo(name = "generate-extension-properties", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
 public class GenerateExtensionPropertiesMojo extends AbstractMojo {
@@ -44,10 +75,17 @@ public class GenerateExtensionPropertiesMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.outputDirectory}/META-INF/extension.yaml", required = true, readonly = true)
     File outputFile;
 
+    /**
+     * Default constructor.
+     */
+    public GenerateExtensionPropertiesMojo() {
+        super();
+    }
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (!outputFile.getParentFile().exists() && !outputFile.getParentFile().mkdirs())
-                throw new MojoFailureException("Unable to create output directory");
+            throw new MojoFailureException("Unable to create output directory");
 
         final Yaml yaml = new Yaml();
         try (final FileWriter fw = new FileWriter(outputFile)) {

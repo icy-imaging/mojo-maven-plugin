@@ -31,6 +31,13 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+/**
+ * Mojo that installs project artifacts as Icy extensions during the Maven build lifecycle.
+ * This allows the artifacts to be registered in the Icy platform by creating a configuration
+ * file in the Icy home directory.
+ * <p>
+ * This class is bound to the Maven install phase and requires test-scoped dependency resolution.
+ */
 @Mojo(name = "install-extension", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST)
 public class InstallExtensionMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
@@ -38,6 +45,13 @@ public class InstallExtensionMojo extends AbstractMojo {
 
     @Parameter(defaultValue = "true", required = true)
     Boolean installIcyExtension;
+
+    /**
+     * Default constructor.
+     */
+    public InstallExtensionMojo() {
+        super();
+    }
 
     /**
      * Perform whatever build-process behavior this <code>Mojo</code> implements.<br>
@@ -58,19 +72,13 @@ public class InstallExtensionMojo extends AbstractMojo {
             if (icyHomeDirectory.mkdirs())
                 getLog().info("Created icy home directory");
 
-        // Finding extensions directory
-        final File extensionsDirectory = new File(icyHomeDirectory, "extensions");
-        if (!extensionsDirectory.exists())
-            if (extensionsDirectory.mkdirs())
-                getLog().info("Created icy extensions folder");
-
         String distribution = "";
         if (project.getDistributionManagement() != null)
             if (project.getDistributionManagement().getRepository() != null)
                 distribution = Objects.requireNonNullElse(project.getDistributionManagement().getRepository().getUrl(), "");
 
         // Writing extensions binary file
-        final File extensionsBinaryFile = new File(extensionsDirectory, "extensions.yml");
+        final File extensionsBinaryFile = new File(icyHomeDirectory, "extensions.yml");
         if (!extensionsBinaryFile.exists()) {
             final List<Map<String, Object>> list = new ArrayList<>();
             list.add(
@@ -89,7 +97,7 @@ public class InstallExtensionMojo extends AbstractMojo {
                 //final byte[] readData = Base64.getDecoder().decode(readRawData);
                 //final StringBuilder sb = new StringBuilder();
                 //for (final byte readDatum : readData)
-                    //sb.append((char) readDatum);
+                //sb.append((char) readDatum);
 
                 final Yaml yaml = new Yaml();
                 //final List<Map<String, Object>> list = yaml.load(sb.toString());

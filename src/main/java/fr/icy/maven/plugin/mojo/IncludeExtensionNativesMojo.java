@@ -31,19 +31,53 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 
+/**
+ * Mojo responsible for including native files specific to various operating systems and architectures
+ * into the Maven build output directory. This class searches for native files located in predefined
+ * subdirectories of the `natives` folder in the project base directory, and copies them to the corresponding
+ * output locations.
+ * <p>
+ * The supported architectures are:
+ * - x86_64
+ * - arm64
+ * <p>
+ * The supported operating systems are:
+ * - windows
+ * - macos
+ * - debian
+ * - ubuntu
+ * - archlinux
+ * <p>
+ * Each operating system may require specific filters to identify the native files based on their extensions:
+ * - Windows: `.dll`
+ * - macOS: `.dylib` or `.jnilib`
+ * - Linux: `.so`
+ * <p>
+ * Behavior:
+ * - Searches recursively for native files in the `natives/` directory structure.
+ * - Copies the identified native files to the `target/natives/` folder.
+ * - Logs progress, warnings, and errors during the file discovery and copying process.
+ */
 @Deprecated(forRemoval = true)
 @Mojo(name = "include-extension-natives", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
 public class IncludeExtensionNativesMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     MavenProject project;
 
-    private static final String[] ARCHITECTURES =  new String[] {
+    private static final String[] ARCHITECTURES = new String[]{
             "x86_64", "arm64"
     };
 
-    private static final String[] OS = new String[] {
+    private static final String[] OS = new String[]{
             "windows", "macos", "debian", "ubuntu", "archlinux"
     };
+
+    /**
+     * Default constructor.
+     */
+    public IncludeExtensionNativesMojo() {
+        super();
+    }
 
     /**
      * Perform whatever build-process behavior this <code>Mojo</code> implements.<br>

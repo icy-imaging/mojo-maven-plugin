@@ -4,9 +4,9 @@
 [![Twitter](https://img.shields.io/twitter/follow/Icy_BioImaging)](https://x.com/Icy_BioImaging)
 [![Image.sc forum](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fforum.image.sc%2Ftag%2Ficy.json&query=%24.topic_list.tags.0.topic_count&suffix=%20topics&label=forum&color=0AA0B4)](https://forum.image.sc/tag/icy)
 
-# Icy Maven Plugin
+# Mojo Maven Plugin (for Icy)
 
-This is the repository for the Maven configuration of *Icy Maven Plugin*, a Maven plugin for [bioimage analysis software Icy](https://icy.bioimageanalysis.org/) and its plugins,
+This is the repository for the Maven configuration of *Mojo Maven Plugin*, a Maven plugin for [bioimage analysis software Icy](https://icy.bioimageanalysis.org/) and its plugins,
 which was developed by members or former members of the [Biological Image Analysis unit at Institut Pasteur](https://research.pasteur.fr/en/team/bioimage-analysis/).
 This project is licensed under the LGPLv3 license.     
 Icy is developed and maintained by [Biological Image Analysis unit at Institut Pasteur](https://research.pasteur.fr/en/team/bioimage-analysis/).

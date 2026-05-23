@@ -59,6 +59,13 @@ public class GenerateDependenciesPropertiesMojo extends AbstractMojo {
     @Parameter
     String[] excludeArtifactIds;
 
+    /**
+     * Default constructor.
+     */
+    public GenerateDependenciesPropertiesMojo() {
+        super();
+    }
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (!outputFile.getParentFile().exists() && !outputFile.getParentFile().mkdirs())
