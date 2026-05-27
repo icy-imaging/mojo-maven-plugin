@@ -1,0 +1,76 @@
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+      when: always
+    - when: never
+
+variables:
+  # Speed up Maven by using local repo within project and optimizing JVM
+  MAVEN_OPTS: >-
+    -Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository
+    -Dorg.slf4j.simpleLogger.showDateTime=true
+    -Djava.awt.headless=true
+  MAVEN_CLI_OPTS: >-
+    --batch-mode
+    --errors
+    --fail-at-end
+    --show-version
+    --also-make-dependents
+    -DinstallAtEnd=true
+    -DdeployAtEnd=true
+
+# Cache Maven repository between jobs and pipelines
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .m2/repository
+    - target/
+
+stages:
+  - build
+  - deploy
+
+# Template for DRY configuration
+.maven_base:
+  image: maven:3.9.15-eclipse-temurin-25-noble
+  before_script:
+    - mvn --version
+
+compile:
+  extends: .maven_base
+  stage: build
+  script:
+    - mvn $MAVEN_CLI_OPTS compile
+  only:
+    changes:
+      - pom.xml
+      - src/main/**/*
+
+# Deploy snapshots to internal Maven repo (Nexus/Artifactory)
+deploy_snapshot:
+  extends: .maven_base
+  stage: deploy
+  before_script:
+    - echo "Checking SNAPSHOT presence…"
+    - export JAR_VERSION=$(cat pom.xml | sed '2 s/xmlns=".*"//g' | xmllint --xpath 'string(//project/version)' -)
+    - if ! [[ $JAR_VERSION =~ .*SNAPSHOT ]]; then >&2 echo "Unable to deploy snapshot, the project is not a SNAPSHOT"; exit 0; fi # Should not happen
+  script:
+    - echo "Deploying snapshot…"
+  #    - mvn $MAVEN_CLI_OPTS deploy -s .m2/settings.xml -DskipTests
+  rules:
+    - if: $CI_COMMIT_TAG !~ /^v(\d+\.\d+\.\d+)(-(a|b|rc)(.\d+)?)?$/
+
+# Deploy releases only on tags
+deploy_release:
+  extends: .maven_base
+  stage: deploy
+  before_script:
+    - echo "Checking SNAPSHOT presence…"
+    - export JAR_VERSION=$(cat pom.xml | sed '2 s/xmlns=".*"//g' | xmllint --xpath 'string(//project/version)' -)
+    - if [[ $JAR_VERSION =~ .*SNAPSHOT ]]; then echo "Unable to deploy release, the project is a SNAPSHOT"; exit 0; fi # Should not happen
+  script:
+    - echo "Deploying release…"
+  #    - mvn $MAVEN_CLI_OPTS deploy -s .m2/settings.xml -DskipTests
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v(\d+\.\d+\.\d+)(-(a|b|rc)(.\d+)?)?$/
+  when: manual  # Require button click for releases

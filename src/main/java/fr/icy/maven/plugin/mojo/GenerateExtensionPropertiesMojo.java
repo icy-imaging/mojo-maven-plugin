@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025. Institut Pasteur.
+ * Copyright (c) 2010-2026. Institut Pasteur.
  *
  * This file is part of Icy.
  * Icy is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  * along with Icy. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.bioimageanalysis.icy.maven3;
+package fr.icy.maven.plugin.mojo;
 
 import org.apache.maven.model.Contributor;
 import org.apache.maven.model.Developer;
@@ -30,27 +30,62 @@ import org.apache.maven.project.MavenProject;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
- * @author Thomas Musset
- * @version 1.0.0-a.5
+ * Mojo responsible for generating extension metadata as a YAML file
+ * containing project-related information. The metadata is used for
+ * describing the Maven project and its contributors in a structured format.
+ * <p>
+ * This Mojo is bound to the `generate-resources` phase of the Maven
+ * lifecycle and generates the file at the specified output path.
+ * <p>
+ * Goals Supported:
+ * <ul>
+ * <li>generate-extension-properties: Generates `extension.yaml` with project
+ * details, such as artifact information, SCM details, developers, and
+ * contributors.</li>
+ * </ul>
+ * <p>
+ * Configuration:
+ * <ul>
+ * <li>The `project` parameter is automatically injected with the Maven
+ * project during execution.</li>
+ * <li>The `outputFile` parameter specifies the file path where the generated
+ * YAML should be stored. By default, it is
+ * `${project.build.outputDirectory}/META-INF/extension.yaml`.</li>
+ * </ul>
+ * <p>
+ * Functionality:
+ * <ul>
+ * <li>Extracts metadata from the Maven project, including artifactId,
+ * groupId, version, name, description, organization details, SCM
+ * information, kernel version (icy.version), and lists of developers
+ * and contributors.</li>
+ * <li>Metadata is serialized into a YAML file using the SnakeYAML library.</li>
+ * <li>Automatically manages the creation of the output directory if it
+ * does not exist.</li>
+ * </ul>
  */
 @Mojo(name = "generate-extension-properties", defaultPhase = LifecyclePhase.GENERATE_RESOURCES)
-public class GenerateExtensionProperties extends AbstractMojo {
+public class GenerateExtensionPropertiesMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     MavenProject project;
 
     @Parameter(defaultValue = "${project.build.outputDirectory}/META-INF/extension.yaml", required = true, readonly = true)
     File outputFile;
 
+    /**
+     * Default constructor.
+     */
+    public GenerateExtensionPropertiesMojo() {
+        super();
+    }
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (!outputFile.getParentFile().exists() && !outputFile.getParentFile().mkdirs())
-                throw new MojoFailureException("Unable to create output directory");
+            throw new MojoFailureException("Unable to create output directory");
 
         final Yaml yaml = new Yaml();
         try (final FileWriter fw = new FileWriter(outputFile)) {
@@ -65,7 +100,7 @@ public class GenerateExtensionProperties extends AbstractMojo {
             data.put("url", project.getUrl());
             data.put("scm", project.getScm().getUrl());
 
-            data.put("kernelVersion", project.getProperties().getProperty("icy.kernel.version"));
+            data.put("kernelVersion", project.getProperties().getProperty("icy.version"));
 
             final List<Map<String, Object>> developersData = new ArrayList<>();
             for (final Developer developer : project.getDevelopers()) {
@@ -97,14 +132,17 @@ public class GenerateExtensionProperties extends AbstractMojo {
             }
             data.put("contributors", contributorsData);
 
-            data.put("downloadUrl", project.getDistributionManagement().getDownloadUrl());
-            data.put("repository", project.getDistributionManagement().getRepository().getName());
-            data.put("repositoryUrl", project.getDistributionManagement().getRepository().getUrl());
+            if (project.getDistributionManagement() != null) {
+                data.put("downloadUrl", Objects.requireNonNullElse(project.getDistributionManagement().getDownloadUrl(), ""));
+                data.put("repository", Objects.requireNonNullElse(project.getDistributionManagement().getRepository().getName(), ""));
+                data.put("repositoryUrl", Objects.requireNonNullElse(project.getDistributionManagement().getRepository().getUrl(), ""));
+            }
 
             yaml.dump(data, fw);
+            getLog().info("Generated extension properties successfully");
         }
-        catch (final IOException e) {
-            throw new MojoExecutionException(e);
+        catch (final Throwable t) {
+            throw new MojoExecutionException("Unable to generate extension properties", t);
         }
     }
 }

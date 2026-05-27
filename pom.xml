@@ -5,14 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.bioimageanalysis.icy</groupId>
+        <groupId>fr.icy</groupId>
         <artifactId>pom-icy</artifactId>
-        <version>3.0.0-a.5</version>
+        <version>3.0.0-a.7</version>
     </parent>
 
-    <groupId>org.bioimageanalysis.icy.maven3</groupId>
-    <artifactId>extension-properties-plugin</artifactId>
-    <version>1.0.0-a.5</version>
+    <groupId>fr.icy.maven</groupId>
+    <artifactId>mojo-maven-plugin</artifactId>
+    <version>1.0.0-a.7</version>
 
     <packaging>maven-plugin</packaging>
 
@@ -22,17 +22,17 @@
     <inceptionYear>2025</inceptionYear>
 
     <scm>
-        <url>https://gitlab.pasteur.fr/bia/icy/maven/maven-extension-properties</url>
+        <url>https://gitlab.pasteur.fr/bia/icy/maven/mojo-maven-plugin</url>
         <tag>v${project.version}</tag>
     </scm>
 
     <issueManagement>
         <system>GitLab Issues</system>
-        <url>https://gitlab.pasteur.fr/bia/icy/maven/maven-extension-properties/-/issues</url>
+        <url>https://gitlab.pasteur.fr/bia/icy/maven/mojo-maven-plugin/-/issues</url>
     </issueManagement>
     <ciManagement>
         <system>GitLab CI</system>
-        <url>https://gitlab.pasteur.fr/bia/icy/maven/maven-extension-properties/-/pipelines</url>
+        <url>https://gitlab.pasteur.fr/bia/icy/maven/mojo-maven-plugin/-/pipelines</url>
     </ciManagement>
 
     <organization>
@@ -80,47 +80,66 @@
     <properties>
         <license.licenseName>GNU LGPLv3</license.licenseName>
         <license.copyrightOwners>Institut Pasteur</license.copyrightOwners>
+
+        <maven-core.version>3.9.15</maven-core.version>
+        <org.apache.maven.maven-core.version>${maven-core.version}</org.apache.maven.maven-core.version>
+
+        <maven-plugin-api.version>${maven-core.version}</maven-plugin-api.version>
+        <org.apache.maven.maven-plugin-api.version>${maven-plugin-api.version}</org.apache.maven.maven-plugin-api.version>
+
+        <maven-plugin-annotations.version>3.15.2</maven-plugin-annotations.version>
+        <org.apache.maven.plugin-tools.maven-plugin-annotations.version>${maven-plugin-annotations.version}</org.apache.maven.plugin-tools.maven-plugin-annotations.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.apache.maven</groupId>
-            <artifactId>maven-plugin-api</artifactId>
-            <version>3.9.10</version>
+            <artifactId>maven-core</artifactId>
+            <version>${org.apache.maven.maven-core.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.maven</groupId>
-            <artifactId>maven-core</artifactId>
-            <version>3.9.10</version>
+            <artifactId>maven-plugin-api</artifactId>
+            <version>${org.apache.maven.maven-plugin-api.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.maven.plugin-tools</groupId>
             <artifactId>maven-plugin-annotations</artifactId>
-            <version>3.15.1</version>
-            <scope>provided</scope>
+            <version>${org.apache.maven.plugin-tools.maven-plugin-annotations.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <scope>compile</scope>
+            <version>${org.yaml.snakeyaml.version}</version>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
-                <version>3.15.1</version>
+                <version>${maven-plugin-plugin.version}</version>
+                <configuration>
+                    <!-- Prefix used to invoke this maven plugin: mvn icy-mojo:something -->
+                    <goalPrefix>icy-mojo</goalPrefix>
+                    <skipErrorNoDescriptorsFound>false</skipErrorNoDescriptorsFound>
+                </configuration>
                 <executions>
                     <execution>
-                        <id>default-descriptor</id>
-                        <configuration>
-                            <goalPrefix>extension-properties</goalPrefix>
-                        </configuration>
+                        <id>generate-descriptor</id>
+                        <goals>
+                            <goal>descriptor</goal>
+                        </goals>
+                    </execution>
+                    <!-- Generates help goal (mvn icy-mojo:help) -->
+                    <execution>
+                        <id>generate-helpmojo</id>
+                        <goals>
+                            <goal>helpmojo</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>

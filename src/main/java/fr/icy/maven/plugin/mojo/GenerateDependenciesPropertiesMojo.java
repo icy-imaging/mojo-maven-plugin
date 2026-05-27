@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025. Institut Pasteur.
+ * Copyright (c) 2010-2026. Institut Pasteur.
  *
  * This file is part of Icy.
  * Icy is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  * along with Icy. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.bioimageanalysis.icy.maven3;
+package fr.icy.maven.plugin.mojo;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Dependency;
@@ -46,7 +46,7 @@ import java.util.*;
  */
 @Deprecated(forRemoval = true)
 @Mojo(name = "generate-dependencies-properties", defaultPhase = LifecyclePhase.GENERATE_SOURCES, threadSafe = true, requiresDependencyResolution = ResolutionScope.TEST)
-public class GenerateDependenciesProperties extends AbstractMojo {
+public class GenerateDependenciesPropertiesMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     MavenProject project;
 
@@ -58,6 +58,13 @@ public class GenerateDependenciesProperties extends AbstractMojo {
 
     @Parameter
     String[] excludeArtifactIds;
+
+    /**
+     * Default constructor.
+     */
+    public GenerateDependenciesPropertiesMojo() {
+        super();
+    }
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
