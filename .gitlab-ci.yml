@@ -1,6 +1,6 @@
 workflow:
   rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
     - when: never
 
@@ -32,7 +32,7 @@ stages:
 
 # Template for DRY configuration
 .maven_base:
-  image: maven:3.9.15-eclipse-temurin-25-noble
+  image: maven:3.9.16-eclipse-temurin-25-noble
   before_script:
     - mvn --version
 
@@ -45,20 +45,6 @@ compile:
     changes:
       - pom.xml
       - src/main/**/*
-
-# Deploy snapshots to internal Maven repo (Nexus/Artifactory)
-deploy_snapshot:
-  extends: .maven_base
-  stage: deploy
-  before_script:
-    - echo "Checking SNAPSHOT presence…"
-    - export JAR_VERSION=$(cat pom.xml | sed '2 s/xmlns=".*"//g' | xmllint --xpath 'string(//project/version)' -)
-    - if ! [[ $JAR_VERSION =~ .*SNAPSHOT ]]; then >&2 echo "Unable to deploy snapshot, the project is not a SNAPSHOT"; exit 0; fi # Should not happen
-  script:
-    - echo "Deploying snapshot…"
-  #    - mvn $MAVEN_CLI_OPTS deploy -s .m2/settings.xml -DskipTests
-  rules:
-    - if: $CI_COMMIT_TAG !~ /^v(\d+\.\d+\.\d+)(-(a|b|rc)(.\d+)?)?$/
 
 # Deploy releases only on tags
 deploy_release:

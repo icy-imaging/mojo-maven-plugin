@@ -27,7 +27,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 /**
  * Maven Mojo for deploying an extension to the Icy platform.
  * <p>
- * This Mojo is triggered during the deploy phase of the Maven build lifecycle.
+ * This Mojo is triggered during the deployment phase of the Maven build lifecycle.
  * It is responsible for registering and deploying extensions to the Icy website.
  * The current implementation is a placeholder and requires further development.
  */

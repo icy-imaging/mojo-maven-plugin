@@ -7,18 +7,18 @@
     <parent>
         <groupId>fr.icy</groupId>
         <artifactId>pom-icy</artifactId>
-        <version>3.0.0-a.7</version>
+        <version>3.0.0-a.8-SNAPSHOT</version>
     </parent>
 
     <groupId>fr.icy.maven</groupId>
     <artifactId>mojo-maven-plugin</artifactId>
-    <version>1.0.0-a.7</version>
+    <version>1.0.0-a.8</version>
 
     <packaging>maven-plugin</packaging>
 
     <name>Maven plugin for build automation</name>
-    <description>Provides tools to generate properties inside extension jar</description>
-    <url>https://icy.bioimageanalysis.org/</url>
+    <description>Provides tools for installing and deploying Icy extensions</description>
+    <url>http://icy.fr/</url>
     <inceptionYear>2025</inceptionYear>
 
     <scm>
@@ -53,6 +53,7 @@
             <id>tmusset</id>
             <name>Thomas Musset</name>
             <url>https://icy.bioimageanalysis.org/author/tmusset/</url>
+            <timezone>Europe/Paris</timezone>
             <roles>
                 <role>lead</role>
                 <role>developer</role>
@@ -67,6 +68,8 @@
     <contributors>
         <contributor>
             <name>Thomas Musset</name>
+            <timezone>Europe/Paris</timezone>
+            <properties><id>Azargas</id></properties>
         </contributor>
     </contributors>
 
@@ -80,15 +83,6 @@
     <properties>
         <license.licenseName>GNU LGPLv3</license.licenseName>
         <license.copyrightOwners>Institut Pasteur</license.copyrightOwners>
-
-        <maven-core.version>3.9.15</maven-core.version>
-        <org.apache.maven.maven-core.version>${maven-core.version}</org.apache.maven.maven-core.version>
-
-        <maven-plugin-api.version>${maven-core.version}</maven-plugin-api.version>
-        <org.apache.maven.maven-plugin-api.version>${maven-plugin-api.version}</org.apache.maven.maven-plugin-api.version>
-
-        <maven-plugin-annotations.version>3.15.2</maven-plugin-annotations.version>
-        <org.apache.maven.plugin-tools.maven-plugin-annotations.version>${maven-plugin-annotations.version}</org.apache.maven.plugin-tools.maven-plugin-annotations.version>
     </properties>
 
     <dependencies>

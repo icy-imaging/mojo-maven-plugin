@@ -29,7 +29,10 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Mojo that installs project artifacts as Icy extensions during the Maven build lifecycle.
@@ -77,7 +80,7 @@ public class InstallExtensionMojo extends AbstractMojo {
             if (project.getDistributionManagement().getRepository() != null)
                 distribution = Objects.requireNonNullElse(project.getDistributionManagement().getRepository().getUrl(), "");
 
-        // Writing extensions binary file
+        // Writing extension yaml file
         final File extensionsBinaryFile = new File(icyHomeDirectory, "extensions.yml");
         if (!extensionsBinaryFile.exists()) {
             final List<Map<String, Object>> list = new ArrayList<>();
@@ -86,7 +89,8 @@ public class InstallExtensionMojo extends AbstractMojo {
                             "groupId", project.getGroupId(),
                             "artifactId", project.getArtifactId(),
                             "version", project.getVersion(),
-                            "distribution", distribution
+                            "distribution", distribution,
+                            "enabled", true
                     )
             );
             dumpData(list, extensionsBinaryFile);
@@ -117,7 +121,8 @@ public class InstallExtensionMojo extends AbstractMojo {
                                 "groupId", project.getGroupId(),
                                 "artifactId", project.getArtifactId(),
                                 "version", project.getVersion(),
-                                "distribution", distribution
+                                "distribution", distribution,
+                                "enabled", true
                         )
                 );
 
@@ -130,7 +135,7 @@ public class InstallExtensionMojo extends AbstractMojo {
     }
 
     /**
-     * Write data to extensions binary file
+     * Write data to the extension YAML file
      */
     private void dumpData(final List<Map<String, Object>> list, final File extensionsFile) throws MojoExecutionException {
         final Yaml yaml = new Yaml();
