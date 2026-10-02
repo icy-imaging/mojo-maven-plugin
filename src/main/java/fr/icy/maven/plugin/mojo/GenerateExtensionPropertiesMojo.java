@@ -20,6 +20,7 @@ package fr.icy.maven.plugin.mojo;
 
 import org.apache.maven.model.Contributor;
 import org.apache.maven.model.Developer;
+import org.apache.maven.model.Repository;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -135,8 +136,15 @@ public class GenerateExtensionPropertiesMojo extends AbstractMojo {
 
             if (project.getDistributionManagement() != null) {
                 data.put("downloadUrl", Objects.requireNonNullElse(project.getDistributionManagement().getDownloadUrl(), ""));
-                data.put("repository", Objects.requireNonNullElse(project.getDistributionManagement().getRepository().getName(), ""));
-                data.put("repositoryUrl", Objects.requireNonNullElse(project.getDistributionManagement().getRepository().getUrl(), ""));
+                final Repository repository = project.getDistributionManagement().getRepository();
+                if (repository != null) {
+                    data.put("repository", Objects.requireNonNullElse(repository.getName(), ""));
+                    data.put("repositoryUrl", Objects.requireNonNullElse(repository.getUrl(), ""));
+                }
+                else {
+                    data.put("repository", "");
+                    data.put("repositoryUrl", "");
+                }
             }
 
             yaml.dump(data, fw);

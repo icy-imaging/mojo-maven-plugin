@@ -12,7 +12,7 @@
 
     <groupId>fr.icy.maven</groupId>
     <artifactId>mojo-maven-plugin</artifactId>
-    <version>1.0.0-a.8</version>
+    <version>1.0.0-a.8-SNAPSHOT</version>
 
     <packaging>maven-plugin</packaging>
 
