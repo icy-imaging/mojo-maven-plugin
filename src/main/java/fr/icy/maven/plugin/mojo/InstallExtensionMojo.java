@@ -18,6 +18,7 @@
 
 package fr.icy.maven.plugin.mojo;
 
+import fr.icy.maven.plugin.mojo.lang.Extension;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -29,8 +30,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -41,13 +41,18 @@ import java.util.Objects;
  * <p>
  * This class is bound to the Maven install phase and requires test-scoped dependency resolution.
  */
-@Mojo(name = "install-extension", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.TEST)
+@Mojo(name = "install-extension", defaultPhase = LifecyclePhase.INSTALL, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class InstallExtensionMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     MavenProject project;
 
     @Parameter(defaultValue = "true", required = true)
     Boolean installIcyExtension;
+
+    private static final String KEY_VERSION = "version";
+    private static final String KEY_EXTENSIONS = "extensions";
+
+    private static final Integer CURRENT_VERSION = 0;
 
     /**
      * Default constructor.
@@ -76,82 +81,98 @@ public class InstallExtensionMojo extends AbstractMojo {
                 getLog().info("Created icy home directory");
 
         String distribution = "";
-        if (project.getDistributionManagement() != null)
-            if (project.getDistributionManagement().getRepository() != null)
+        final boolean isSnapshot = project.getVersion().endsWith("-SNAPSHOT");
+        if (project.getDistributionManagement() != null) {
+            if (!isSnapshot && project.getDistributionManagement().getRepository() != null)
                 distribution = Objects.requireNonNullElse(project.getDistributionManagement().getRepository().getUrl(), "");
+            else if (isSnapshot && project.getDistributionManagement().getSnapshotRepository() != null)
+                distribution = Objects.requireNonNullElse(project.getDistributionManagement().getSnapshotRepository().getUrl(), "");
+        }
+
+        final Extension extension = new Extension(
+                project.getGroupId(),
+                project.getArtifactId(),
+                project.getVersion(),
+                //"",
+                distribution,
+                Extension.dependenciesToMapList(project.getDependencies()),
+                Boolean.TRUE
+        );
 
         // Writing extension yaml file
-        final File extensionsBinaryFile = new File(icyHomeDirectory, "extensions.yml");
-        if (!extensionsBinaryFile.exists()) {
-            final List<Map<String, Object>> list = new ArrayList<>();
-            list.add(
-                    Map.of(
-                            "groupId", project.getGroupId(),
-                            "artifactId", project.getArtifactId(),
-                            "version", project.getVersion(),
-                            "distribution", distribution,
-                            "enabled", true
-                    )
-            );
-            dumpData(list, extensionsBinaryFile);
-        }
+        final File extensionsFile = new File(icyHomeDirectory, "extensions.yaml");
+        final Map<String, Object> content;
+        if (!extensionsFile.exists())
+            content = new HashMap<>();
         else {
-            try (final FileInputStream is = new FileInputStream(extensionsBinaryFile)) {
-                //final byte[] readRawData = is.readAllBytes();
-                //final byte[] readData = Base64.getDecoder().decode(readRawData);
-                //final StringBuilder sb = new StringBuilder();
-                //for (final byte readDatum : readData)
-                //sb.append((char) readDatum);
-
+            Map<String, Object> temp;
+            try (final FileInputStream is = new FileInputStream(extensionsFile)) {
                 final Yaml yaml = new Yaml();
-                //final List<Map<String, Object>> list = yaml.load(sb.toString());
                 final Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-                final List<Map<String, Object>> list = yaml.load(reader);
+                temp = yaml.loadAs(reader, Map.class);
                 reader.close();
-                for (final Map<String, Object> map : list) {
-                    if (map.get("groupId").equals(project.getGroupId()) && map.get("artifactId").equals(project.getArtifactId())) {
-                        getLog().info("Artefact already registered in Icy, replaced it");
-                        list.remove(map);
-                        break;
-                    }
-                }
-
-                list.add(
-                        Map.of(
-                                "groupId", project.getGroupId(),
-                                "artifactId", project.getArtifactId(),
-                                "version", project.getVersion(),
-                                "distribution", distribution,
-                                "enabled", true
-                        )
-                );
-
-                dumpData(list, extensionsBinaryFile);
             }
             catch (final Throwable t) {
-                throw new MojoExecutionException("Failed to read extensions file", t);
+                //throw new MojoExecutionException("Failed to read extension file", t);
+                getLog().warn("Invalid extensions.yaml file, cleared it…", t);
+                temp = new HashMap<>();
             }
+            content = temp;
         }
+
+        final Integer version = (Integer) content.getOrDefault(KEY_VERSION, -1);
+        if (version < 0 || version > CURRENT_VERSION) {
+            content.clear();
+            content.put(KEY_VERSION, CURRENT_VERSION);
+            content.put(KEY_EXTENSIONS, Map.of(0L, extension.asMap()));
+        }
+        else {
+            if (version < CURRENT_VERSION)
+                upgradeYaml(content);
+
+            @SuppressWarnings("unchecked")
+            final Map<Integer, Object> extensions = (Map<Integer, Object>) content.getOrDefault(KEY_EXTENSIONS, new HashMap<>());
+
+            boolean found = false;
+            for (final Integer index : extensions.keySet()) {
+                @SuppressWarnings("unchecked")
+                final Extension ext = Extension.fromMap((Map<String, Object>) extensions.get(index));
+                if (ext.getGroupId().equals(project.getGroupId()) && ext.getArtifactId().equals(project.getArtifactId())) {
+                    getLog().info("Artefact already registered in Icy, replaced it");
+                    extensions.put(index, extension.asMap());
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+                extensions.put(extensions.size() + 1, extension.asMap());
+
+            content.put(KEY_EXTENSIONS, extensions);
+        }
+
+        dumpData(content, extensionsFile);
     }
 
     /**
      * Write data to the extension YAML file
      */
-    private void dumpData(final List<Map<String, Object>> list, final File extensionsFile) throws MojoExecutionException {
+    private void dumpData(final Map<String, Object> content, final File extensionsFile) throws MojoExecutionException {
         final Yaml yaml = new Yaml();
-        //final String dump = yaml.dump(list);
-        //final byte[] data = Base64.getEncoder().encode(dump.getBytes(StandardCharsets.ISO_8859_1));
 
         try (final FileOutputStream os = new FileOutputStream(extensionsFile)) {
-            //os.write(data);
             final Writer writer = new OutputStreamWriter(os, StandardCharsets.UTF_8);
-            yaml.dump(list, writer);
+            yaml.dump(content, writer);
             writer.flush();
             writer.close();
             getLog().info("Extension file written successfully");
         }
         catch (final Throwable t) {
-            throw new MojoExecutionException("Failed to create extensions file", t);
+            throw new MojoExecutionException("Failed to write the extensions file", t);
         }
+    }
+
+    private void upgradeYaml(final Map<String, Object> content) {
+        // TODO: retro-compatibility
     }
 }

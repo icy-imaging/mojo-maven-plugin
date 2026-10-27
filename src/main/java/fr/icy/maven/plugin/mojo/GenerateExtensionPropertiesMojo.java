@@ -89,64 +89,64 @@ public class GenerateExtensionPropertiesMojo extends AbstractMojo {
         if (!outputFile.getParentFile().exists() && !outputFile.getParentFile().mkdirs())
             throw new MojoFailureException("Unable to create output directory");
 
+        final Map<String, Object> data = new HashMap<>();
+        data.put("artifactId", project.getArtifactId());
+        data.put("groupId", project.getGroupId());
+        data.put("version", project.getVersion());
+        data.put("name", project.getName());
+        data.put("description", project.getDescription());
+        data.put("organization", project.getOrganization().getName());
+        data.put("organizationUrl", project.getOrganization().getUrl());
+        data.put("url", project.getUrl());
+        data.put("scm", project.getScm().getUrl());
+
+        data.put("kernelVersion", project.getProperties().getProperty("icy.version"));
+
+        final List<Map<String, Object>> developersData = new ArrayList<>();
+        for (final Developer developer : project.getDevelopers()) {
+            final Map<String, Object> developerData = new HashMap<>();
+            developerData.put("id", developer.getId());
+            developerData.put("name", developer.getName());
+            developerData.put("email", developer.getEmail());
+            developerData.put("url", developer.getUrl());
+            developerData.put("organization", developer.getOrganization());
+            developerData.put("organizationUrl", developer.getOrganizationUrl());
+            developerData.put("timezone", developer.getTimezone());
+            developerData.put("roles", developer.getRoles());
+
+            developersData.add(developerData);
+        }
+        data.put("developers", developersData);
+
+        final List<Map<String, Object>> contributorsData = new ArrayList<>();
+        for (final Contributor contributor : project.getContributors()) {
+            final Map<String, Object> contributorData = new HashMap<>();
+            contributorData.put("name", contributor.getName());
+            contributorData.put("email", contributor.getEmail());
+            contributorData.put("url", contributor.getUrl());
+            contributorData.put("organization", contributor.getOrganization());
+            contributorData.put("organizationUrl", contributor.getOrganizationUrl());
+            contributorData.put("timezone", contributor.getTimezone());
+
+            contributorsData.add(contributorData);
+        }
+        data.put("contributors", contributorsData);
+
+        if (project.getDistributionManagement() != null) {
+            data.put("downloadUrl", Objects.requireNonNullElse(project.getDistributionManagement().getDownloadUrl(), ""));
+            final Repository repository = project.getDistributionManagement().getRepository();
+            if (repository != null) {
+                data.put("repository", Objects.requireNonNullElse(repository.getName(), ""));
+                data.put("repositoryUrl", Objects.requireNonNullElse(repository.getUrl(), ""));
+            }
+            else {
+                data.put("repository", "");
+                data.put("repositoryUrl", "");
+            }
+        }
+
         final Yaml yaml = new Yaml();
         try (final FileWriter fw = new FileWriter(outputFile)) {
-            final Map<String, Object> data = new HashMap<>();
-            data.put("artifactId", project.getArtifactId());
-            data.put("groupId", project.getGroupId());
-            data.put("version", project.getVersion());
-            data.put("name", project.getName());
-            data.put("description", project.getDescription());
-            data.put("organization", project.getOrganization().getName());
-            data.put("organizationUrl", project.getOrganization().getUrl());
-            data.put("url", project.getUrl());
-            data.put("scm", project.getScm().getUrl());
-
-            data.put("kernelVersion", project.getProperties().getProperty("icy.version"));
-
-            final List<Map<String, Object>> developersData = new ArrayList<>();
-            for (final Developer developer : project.getDevelopers()) {
-                final Map<String, Object> developerData = new HashMap<>();
-                developerData.put("id", developer.getId());
-                developerData.put("name", developer.getName());
-                developerData.put("email", developer.getEmail());
-                developerData.put("url", developer.getUrl());
-                developerData.put("organization", developer.getOrganization());
-                developerData.put("organizationUrl", developer.getOrganizationUrl());
-                developerData.put("timezone", developer.getTimezone());
-                developerData.put("roles", developer.getRoles());
-
-                developersData.add(developerData);
-            }
-            data.put("developers", developersData);
-
-            final List<Map<String, Object>> contributorsData = new ArrayList<>();
-            for (final Contributor contributor : project.getContributors()) {
-                final Map<String, Object> contributorData = new HashMap<>();
-                contributorData.put("name", contributor.getName());
-                contributorData.put("email", contributor.getEmail());
-                contributorData.put("url", contributor.getUrl());
-                contributorData.put("organization", contributor.getOrganization());
-                contributorData.put("organizationUrl", contributor.getOrganizationUrl());
-                contributorData.put("timezone", contributor.getTimezone());
-
-                contributorsData.add(contributorData);
-            }
-            data.put("contributors", contributorsData);
-
-            if (project.getDistributionManagement() != null) {
-                data.put("downloadUrl", Objects.requireNonNullElse(project.getDistributionManagement().getDownloadUrl(), ""));
-                final Repository repository = project.getDistributionManagement().getRepository();
-                if (repository != null) {
-                    data.put("repository", Objects.requireNonNullElse(repository.getName(), ""));
-                    data.put("repositoryUrl", Objects.requireNonNullElse(repository.getUrl(), ""));
-                }
-                else {
-                    data.put("repository", "");
-                    data.put("repositoryUrl", "");
-                }
-            }
-
             yaml.dump(data, fw);
             getLog().info("Generated extension properties successfully");
         }
