@@ -1,10 +1,12 @@
 package fr.icy.maven.plugin.mojo.lang;
 
 import org.apache.maven.model.Dependency;
+import org.apache.maven.model.DeploymentRepository;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -15,7 +17,6 @@ public final class Extension {
     private static final String KEY_VERSION = "version";
     private static final String KEY_CLASSIFIER = "classifier";
     private static final String KEY_DISTRIBUTION = "distribution";
-    private static final String KEY_DEPENDENCIES = "dependencies";
     private static final String KEY_ENABLED = "enabled";
 
     private final Map<String, Object> content;
@@ -24,18 +25,14 @@ public final class Extension {
             final String groupId,
             final String artifactId,
             final String version,
-            //final String classifier,
-            final String distribution,
-            final List<Map<String, String>> dependencies,
+            final Map<String, String> distribution,
             final Boolean enabled
     ) {
         content = new HashMap<>();
         content.put(KEY_GROUP_ID, groupId);
         content.put(KEY_ARTIFACT_ID, artifactId);
         content.put(KEY_VERSION, version);
-        //content.put(KEY_CLASSIFIER, classifier);
         content.put(KEY_DISTRIBUTION, distribution);
-        content.put(KEY_DEPENDENCIES, dependencies);
         content.put(KEY_ENABLED, enabled);
     }
 
@@ -44,9 +41,7 @@ public final class Extension {
                 "",
                 "",
                 "",
-                //"",
-                "",
-                Collections.emptyList(),
+                Collections.emptyMap(),
                 Boolean.TRUE
         );
     }
@@ -75,19 +70,12 @@ public final class Extension {
         content.put(KEY_VERSION, version);
     }
 
-    /*public String getClassifier() {
-        return (String) content.get(KEY_CLASSIFIER);
-    }*/
-
-    /*public void setClassifier(final String classifier) {
-        content.put(KEY_CLASSIFIER, classifier);
-    }*/
-
-    public String getDistribution() {
-        return (String) content.get(KEY_DISTRIBUTION);
+    @SuppressWarnings("unchecked")
+    public Map<String, String> getDistribution() {
+        return (Map<String, String>) content.get(KEY_DISTRIBUTION);
     }
 
-    public void setDistribution(final String distribution) {
+    public void setDistribution(final Map<String, String> distribution) {
         content.put(KEY_DISTRIBUTION, distribution);
     }
 
@@ -128,6 +116,16 @@ public final class Extension {
         return filtered;
     }
 
+    public static @NonNull Map<String, String> DistributionToMap(final @Nullable DeploymentRepository distribution) {
+        if (distribution == null)
+            return Collections.emptyMap();
+
+        return Map.of(
+                "id", distribution.getId(),
+                "url", distribution.getUrl()
+        );
+    }
+
     public static @NonNull List<Map<String, String>> dependenciesToMapList(final List<Dependency> dependencies) {
         final List<Map<String, String>> converted = new ArrayList<>();
         for (final Dependency dependency : filterDependencies(dependencies)) {
@@ -141,16 +139,13 @@ public final class Extension {
         return converted;
     }
 
-    @SuppressWarnings("unchecked")
     @Contract("_ -> new")
     public static @NonNull Extension fromMap(final @NonNull Map<String, Object> map) {
         return new Extension(
                 (String) map.getOrDefault(KEY_GROUP_ID, ""),
                 (String) map.getOrDefault(KEY_ARTIFACT_ID, ""),
                 (String) map.getOrDefault(KEY_VERSION, ""),
-                //(String) map.getOrDefault(KEY_CLASSIFIER, ""),
-                (String) map.getOrDefault(KEY_DISTRIBUTION, ""),
-                (List<Map<String, String>>) map.getOrDefault(KEY_DEPENDENCIES, Collections.emptyList()),
+                (Map<String, String>) map.getOrDefault(KEY_DISTRIBUTION, Collections.emptyMap()),
                 (Boolean) map.getOrDefault(KEY_ENABLED, Boolean.TRUE)
         );
     }

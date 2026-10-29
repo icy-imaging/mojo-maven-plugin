@@ -19,6 +19,7 @@
 package fr.icy.maven.plugin.mojo;
 
 import fr.icy.maven.plugin.mojo.lang.Extension;
+import org.apache.maven.model.DeploymentRepository;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -32,7 +33,6 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Mojo that installs project artifacts as Icy extensions during the Maven build lifecycle.
@@ -80,22 +80,20 @@ public class InstallExtensionMojo extends AbstractMojo {
             if (icyHomeDirectory.mkdirs())
                 getLog().info("Created icy home directory");
 
-        String distribution = "";
+        DeploymentRepository distribution = null;
         final boolean isSnapshot = project.getVersion().endsWith("-SNAPSHOT");
         if (project.getDistributionManagement() != null) {
             if (!isSnapshot && project.getDistributionManagement().getRepository() != null)
-                distribution = Objects.requireNonNullElse(project.getDistributionManagement().getRepository().getUrl(), "");
+                distribution = project.getDistributionManagement().getRepository();
             else if (isSnapshot && project.getDistributionManagement().getSnapshotRepository() != null)
-                distribution = Objects.requireNonNullElse(project.getDistributionManagement().getSnapshotRepository().getUrl(), "");
+                distribution = project.getDistributionManagement().getSnapshotRepository();
         }
 
         final Extension extension = new Extension(
                 project.getGroupId(),
                 project.getArtifactId(),
                 project.getVersion(),
-                //"",
-                distribution,
-                Extension.dependenciesToMapList(project.getDependencies()),
+                Extension.DistributionToMap(distribution),
                 Boolean.TRUE
         );
 
